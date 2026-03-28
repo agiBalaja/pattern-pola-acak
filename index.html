@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Pattern Lock 4D | 8 Angka Acak + Pola Otomatis</title>
+<title>Pattern Lock 4D | Input Pola ? 8 Hasil Acak</title>
 
 <style>
   * {
@@ -24,8 +24,8 @@
     color: #1e466e;
   }
 
-  /* Panel Kontrol */
-  .control-panel {
+  /* Panel Informasi */
+  .info-panel {
     background: linear-gradient(135deg, #1e2a3a, #0f1724);
     border-radius: 32px;
     padding: 20px 24px;
@@ -35,57 +35,13 @@
     text-align: center;
   }
 
-  .seed-area {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    align-items: center;
-    margin: 12px 0;
-  }
-
-  .seed-area label {
-    font-weight: 600;
-  }
-
-  #seedInput {
-    padding: 8px 16px;
-    border-radius: 40px;
-    border: none;
-    font-size: 1rem;
-    width: 180px;
-    text-align: center;
-    background: #f0f3f8;
-    color: #1f3a5f;
-    font-weight: bold;
-  }
-
-  .btn {
-    background: #ff9800;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 40px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-    color: #1e2a3a;
-  }
-
-  .btn-primary {
-    background: #3f51b5;
-    color: white;
-  }
-
-  .btn:hover {
-    transform: scale(0.97);
-    opacity: 0.9;
+  .info-panel h3 {
+    margin: 0 0 8px 0;
   }
 
   .info-text {
-    font-size: 0.85rem;
-    margin-top: 12px;
-    opacity: 0.9;
-    background: #00000033;
+    font-size: 0.9rem;
+    background: #00000055;
     display: inline-block;
     padding: 6px 14px;
     border-radius: 50px;
@@ -132,23 +88,6 @@
     border-radius: 30px;
     margin-bottom: 10px;
     color: #1e466e;
-  }
-
-  .reset-btn {
-    display: block;
-    margin: 8px auto 12px auto;
-    padding: 5px 16px;
-    border: none;
-    border-radius: 60px;
-    background: #f44336;
-    color: white;
-    font-size: 12px;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  .reset-btn:hover {
-    background: #d32f2f;
   }
 
   .wrapper {
@@ -214,6 +153,22 @@
     transform: scale(0.96);
   }
 
+  /* Read-only pattern tidak memiliki cursor pointer dan tidak bisa drag */
+  .pattern.readonly .angka {
+    cursor: default;
+    background: #eef2f5;
+    pointer-events: none;
+  }
+
+  .pattern.readonly .angka.active {
+    background: #2196f3;
+    pointer-events: none;
+  }
+
+  .pattern.readonly .wrapper {
+    cursor: default;
+  }
+
   .nol {
     grid-column: 2 / 3;
     grid-row: 4 / 5;
@@ -248,18 +203,15 @@
 </head>
 <body>
 
-<h2>🔐 Pattern Lock 4D | 8 Angka Acak + Pola Otomatis</h2>
+<h2> Pattern Lock 4D | Input Pola ? 8 Hasil Acak</h2>
 
-<div class="control-panel">
-  <div style="font-size: 1.2rem; font-weight: 600;">🎲 GENERATOR 8 ANGKA 4D + POLA 🎲</div>
-  <div class="seed-area">
-    <label>🔢 SEED (angka):</label>
-    <input type="number" id="seedInput" placeholder="contoh: 12345" value="2025" step="1">
-    <button class="btn btn-primary" id="generateBtn">✨ Generate & Gambar Pola</button>
-  </div>
+<div class="info-panel">
+  <h3>Cara Penggunaan</h3>
   <div class="info-text">
-    ⚡ Seed berupa angka (bilangan bulat). Setiap kali klik tombol, akan dihasilkan <strong>8 angka 4D acak</strong> (0000–9999).<br>
-    Setiap angka akan digambar sebagai pola pada pattern lock di bawah (urutan digit unik).
+    1. Gambar pola (drag/geser) pada <strong>Pattern Input</strong> (pertama).<br>
+    2. Pola yang digambar akan menjadi <strong>seed</strong> untuk menghasilkan 8 angka 4D acak.<br>
+    3. Hasil acak (8 pattern di bawah) otomatis diperbarui dan <strong>read-only</strong> (tidak bisa digambar ulang).<br>
+    4. Setiap kali menggambar pola baru di input, hasil acak akan berubah.
   </div>
 </div>
 
@@ -267,17 +219,31 @@
 
 <script>
   // --------------------------------------------------------------
-  // 1. BUAT 8 PATTERN LOCK
+  // 1. BUAT PATTERN: 1 input pattern + 8 result pattern (readonly)
   // --------------------------------------------------------------
   const container = document.getElementById("container");
-  const TOTAL_PATTERNS = 8;
+  const TOTAL_RESULTS = 31;
 
-  for (let i = 1; i <= TOTAL_PATTERNS; i++) {
+  // Input pattern (indeks 0)
+  container.insertAdjacentHTML("beforeend", `
+    <div class="pattern" data-pattern-idx="input">
+      <div class="pattern-title"> PATTERN INPUT</div>
+      <div class="wrapper">
+        <svg width="280" height="320" viewBox="0 0 280 320"></svg>
+        <div class="angka-container">
+          ${[1,2,3,4,5,6,7,8,9].map(n => `<div class="angka" data-angka="${n}">${n}</div>`).join("")}
+          <div class="angka nol" data-angka="0">0</div>
+        </div>
+      </div>
+    </div>
+  `);
+
+  // Result patterns (readonly)
+  for (let i = 1; i <= TOTAL_RESULTS; i++) {
     container.insertAdjacentHTML("beforeend", `
-      <div class="pattern" data-pattern-idx="${i}">
-        <div class="pattern-title">Pattern ${i}</div>
+      <div class="pattern readonly" data-pattern-idx="result-${i}">
+        <div class="pattern-title"> Hasil ${i}</div>
         <div class="pattern-4d" id="fourdLabel-${i}">----</div>
-        <button class="reset-btn" data-reset="${i}">⟳ Reset Pola</button>
         <div class="wrapper">
           <svg width="280" height="320" viewBox="0 0 280 320"></svg>
           <div class="angka-container">
@@ -292,7 +258,7 @@
   // --------------------------------------------------------------
   // 2. RANDOM SYSTEM (berbasis seed angka integer)
   // --------------------------------------------------------------
-  // Multiplicative congruential generator (simple, deterministic)
+  // LCG generator
   function lcg(seed) {
     let state = seed >>> 0;
     return function() {
@@ -301,19 +267,17 @@
     };
   }
 
-  // Menghasilkan angka 4D (0000-9999) berdasarkan seed dan index pattern
+  // Menghasilkan angka 4D (0000-9999) berdasarkan seed dan index
   function generateFourD(seedNumber, patternIndex) {
-    // Kombinasi seed dengan index untuk menghasilkan variasi
     const combinedSeed = (seedNumber ^ (patternIndex * 0x9e3779b9)) >>> 0;
     const rng = lcg(combinedSeed);
-    // Ambil beberapa nilai untuk keacakan yang lebih baik
     let val = rng();
     val = (val + rng()) >>> 0;
     const raw = val % 10000;
     return raw.toString().padStart(4, '0');
   }
 
-  // Ubah angka 4D menjadi pola urutan digit unik (hapus duplikat, pertahankan urutan pertama)
+  // Ubah angka 4D menjadi pola urutan digit unik (hapus duplikat, pertahankan urutan)
   function uniquePatternFromFourD(fourD) {
     const digits = fourD.split('');
     const seen = new Set();
@@ -328,27 +292,21 @@
   }
 
   // --------------------------------------------------------------
-  // 3. SETUP PATTERN LOCK (masing-masing pattern punya controller)
+  // 3. SETUP INPUT PATTERN (interaktif, drag untuk memilih angka)
   // --------------------------------------------------------------
-  const patternControllers = [];
+  let inputPatternController = null;
 
-  function setupPattern(patternElement, patternIndex) {
+  function setupInputPattern(patternElement) {
     const wrapper = patternElement.querySelector(".wrapper");
     const svg = patternElement.querySelector("svg");
     const angkaElements = [...patternElement.querySelectorAll(".angka")];
-    const resetBtn = patternElement.querySelector(".reset-btn");
     
-    // State pattern
-    let points = [];          // { value, x, y }
+    let points = [];
     let isDragging = false;
     let currentTempPoint = null;
-    
-    let globalMouseMove = null;
-    let globalMouseUp = null;
-    let globalTouchMove = null;
-    let globalTouchEnd = null;
-    
-    // Helper: reset pattern state
+    let globalMouseMove = null, globalMouseUp = null;
+    let globalTouchMove = null, globalTouchEnd = null;
+
     function resetPatternState() {
       points = [];
       currentTempPoint = null;
@@ -356,25 +314,22 @@
       svg.innerHTML = "";
       isDragging = false;
     }
-    
-    // Tambah titik baru (angka) ke pola
-    function addNumberInternal(numberEl) {
+
+    function addNumber(numberEl) {
       if (!numberEl) return false;
       const value = numberEl.dataset.angka;
       if (points.some(p => p.value === value)) return false;
       const center = getCenterRelative(numberEl, wrapper);
-      points.push({ value: value, x: center.x, y: center.y });
+      points.push({ value, x: center.x, y: center.y });
       numberEl.classList.add("active");
       return true;
     }
-    
-    // Gambar ulang garis
+
     function redraw() {
       svg.innerHTML = "";
       if (!points.length) return;
       for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i+1];
+        const p1 = points[i], p2 = points[i+1];
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", p1.x);
         line.setAttribute("y1", p1.y);
@@ -399,15 +354,16 @@
         svg.appendChild(tempLine);
       }
     }
-    
+
     function getCenterRelative(element, wrapperEl) {
       const elemRect = element.getBoundingClientRect();
       const wrapRect = wrapperEl.getBoundingClientRect();
-      const x = elemRect.left + elemRect.width / 2 - wrapRect.left;
-      const y = elemRect.top + elemRect.height / 2 - wrapRect.top;
-      return { x, y };
+      return {
+        x: elemRect.left + elemRect.width/2 - wrapRect.left,
+        y: elemRect.top + elemRect.height/2 - wrapRect.top
+      };
     }
-    
+
     function getNumberAtPoint(clientX, clientY) {
       for (let el of angkaElements) {
         const rect = el.getBoundingClientRect();
@@ -417,22 +373,20 @@
       }
       return null;
     }
-    
+
     function handleDragMove(clientX, clientY) {
       if (!isDragging) return;
       const wrapRect = wrapper.getBoundingClientRect();
-      const relativeX = clientX - wrapRect.left;
-      const relativeY = clientY - wrapRect.top;
-      currentTempPoint = { x: relativeX, y: relativeY };
-      const hitNumber = getNumberAtPoint(clientX, clientY);
-      if (hitNumber && !hitNumber.classList.contains("active")) {
-        addNumberInternal(hitNumber);
+      currentTempPoint = { x: clientX - wrapRect.left, y: clientY - wrapRect.top };
+      const hit = getNumberAtPoint(clientX, clientY);
+      if (hit && !hit.classList.contains("active")) {
+        addNumber(hit);
         const newWrapRect = wrapper.getBoundingClientRect();
         currentTempPoint = { x: clientX - newWrapRect.left, y: clientY - newWrapRect.top };
       }
       redraw();
     }
-    
+
     function endDrag() {
       if (!isDragging) return;
       currentTempPoint = null;
@@ -442,64 +396,42 @@
       if (globalMouseUp) window.removeEventListener("mouseup", globalMouseUp);
       if (globalTouchMove) window.removeEventListener("touchmove", globalTouchMove);
       if (globalTouchEnd) window.removeEventListener("touchend", globalTouchEnd);
-      globalMouseMove = null;
-      globalMouseUp = null;
-      globalTouchMove = null;
-      globalTouchEnd = null;
+      
+      // --- Setelah selesai drag, generate hasil acak berdasarkan pola ---
+      if (points.length > 0) {
+        const patternDigits = points.map(p => p.value);
+        // Konversi pola menjadi seed angka (gabungkan digit)
+        const seedNumber = parseInt(patternDigits.join(''), 10);
+        // Jika pola menghasilkan seed NaN (misal kosong), pakai default
+        const finalSeed = isNaN(seedNumber) ? 0 : seedNumber;
+        generateAllResults(finalSeed);
+      } else {
+        // Jika pola kosong, hasil tetap kosong
+        clearAllResults();
+      }
     }
-    
-    function startDragFromNumber(startNumberEl, clientX, clientY) {
+
+    function startDragFromNumber(startEl, clientX, clientY) {
       if (isDragging) endDrag();
       resetPatternState();
-      const firstCenter = getCenterRelative(startNumberEl, wrapper);
-      points = [{ value: startNumberEl.dataset.angka, x: firstCenter.x, y: firstCenter.y }];
-      startNumberEl.classList.add("active");
+      const center = getCenterRelative(startEl, wrapper);
+      points = [{ value: startEl.dataset.angka, x: center.x, y: center.y }];
+      startEl.classList.add("active");
       isDragging = true;
-      currentTempPoint = { x: firstCenter.x, y: firstCenter.y };
+      currentTempPoint = { x: center.x, y: center.y };
       redraw();
-      
-      globalMouseMove = (e) => {
-        e.preventDefault();
-        handleDragMove(e.clientX, e.clientY);
-      };
-      globalMouseUp = (e) => {
-        e.preventDefault();
-        endDrag();
-      };
-      globalTouchMove = (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        if (touch) handleDragMove(touch.clientX, touch.clientY);
-      };
-      globalTouchEnd = (e) => {
-        e.preventDefault();
-        endDrag();
-      };
+
+      globalMouseMove = (e) => { e.preventDefault(); handleDragMove(e.clientX, e.clientY); };
+      globalMouseUp = (e) => { e.preventDefault(); endDrag(); };
+      globalTouchMove = (e) => { e.preventDefault(); const t = e.touches[0]; if (t) handleDragMove(t.clientX, t.clientY); };
+      globalTouchEnd = (e) => { e.preventDefault(); endDrag(); };
       window.addEventListener("mousemove", globalMouseMove);
       window.addEventListener("mouseup", globalMouseUp);
       window.addEventListener("touchmove", globalTouchMove, { passive: false });
       window.addEventListener("touchend", globalTouchEnd);
     }
-    
-    // Programmatic set pattern dari array digit
-    function setPatternFromDigitArray(digitArray) {
-      if (isDragging) endDrag();
-      resetPatternState();
-      if (!digitArray || digitArray.length === 0) return;
-      const newPoints = [];
-      for (let digit of digitArray) {
-        const el = angkaElements.find(ae => ae.dataset.angka === digit);
-        if (!el) continue;
-        const center = getCenterRelative(el, wrapper);
-        newPoints.push({ value: digit, x: center.x, y: center.y });
-        el.classList.add("active");
-      }
-      points = newPoints;
-      currentTempPoint = null;
-      redraw();
-    }
-    
-    // Event listener setiap angka
+
+    // Pasang event listener ke setiap angka
     angkaElements.forEach(angka => {
       angka.addEventListener("mousedown", (e) => {
         e.preventDefault();
@@ -513,76 +445,114 @@
         if (touch) startDragFromNumber(angka, touch.clientX, touch.clientY);
       });
     });
-    
-    resetBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (isDragging) endDrag();
-      resetPatternState();
-      // juga update label 4D menjadi kosong
-      const labelDiv = patternElement.querySelector(".pattern-4d");
-      if (labelDiv) labelDiv.innerText = "----";
-    });
-    
-    wrapper.addEventListener("dragstart", (e) => e.preventDefault());
-    wrapper.addEventListener("selectstart", (e) => e.preventDefault());
-    
-    // Simpan controller
-    patternControllers.push({
-      setPattern: setPatternFromDigitArray,
-      reset: resetPatternState,
-      setFourDLabel: (fourD) => {
-        const labelDiv = patternElement.querySelector(".pattern-4d");
-        if (labelDiv) labelDiv.innerText = fourD;
-      }
-    });
+
+    wrapper.addEventListener("dragstart", e => e.preventDefault());
+    wrapper.addEventListener("selectstart", e => e.preventDefault());
+
+    return { reset: resetPatternState };
   }
-  
-  // Inisialisasi semua pattern
-  document.querySelectorAll(".pattern").forEach((pattern, idx) => {
-    setupPattern(pattern, idx);
-  });
-  
+
   // --------------------------------------------------------------
-  // 4. GENERATE 8 ANGKA DAN GAMBAR POLA PADA MASING-MASING PATTERN
+  // 4. SETUP RESULT PATTERNS (readonly, hanya bisa diisi secara programatis)
   // --------------------------------------------------------------
-  function generateAndDraw() {
-    let seedVal = seedInput.value.trim();
-    if (seedVal === "") seedVal = "0";
-    let seedNumber = parseInt(seedVal, 10);
-    if (isNaN(seedNumber)) seedNumber = 0;
-    
+  const resultControllers = [];
+
+  function setupResultPattern(patternElement, index) {
+    const wrapper = patternElement.querySelector(".wrapper");
+    const svg = patternElement.querySelector("svg");
+    const angkaElements = [...patternElement.querySelectorAll(".angka")];
+    const labelDiv = patternElement.querySelector(".pattern-4d");
+
+    // Fungsi untuk menggambar pola dari array digit
+    function setPatternFromDigitArray(digitArray) {
+      // Bersihkan semua active
+      angkaElements.forEach(el => el.classList.remove("active"));
+      svg.innerHTML = "";
+      if (!digitArray || digitArray.length === 0) return;
+
+      // Kumpulkan titik-titik
+      const points = [];
+      for (let digit of digitArray) {
+        const el = angkaElements.find(ae => ae.dataset.angka === digit);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const wrapRect = wrapper.getBoundingClientRect();
+        const x = rect.left + rect.width/2 - wrapRect.left;
+        const y = rect.top + rect.height/2 - wrapRect.top;
+        points.push({ x, y });
+        el.classList.add("active");
+      }
+      // Gambar garis
+      for (let i = 0; i < points.length - 1; i++) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", points[i].x);
+        line.setAttribute("y1", points[i].y);
+        line.setAttribute("x2", points[i+1].x);
+        line.setAttribute("y2", points[i+1].y);
+        line.setAttribute("stroke", "#2196f3");
+        line.setAttribute("stroke-width", "4");
+        line.setAttribute("stroke-linecap", "round");
+        svg.appendChild(line);
+      }
+    }
+
+    function setFourDLabel(fourD) {
+      if (labelDiv) labelDiv.innerText = fourD;
+    }
+
+    resultControllers.push({ setPattern: setPatternFromDigitArray, setFourDLabel });
+  }
+
+  // --------------------------------------------------------------
+  // 5. GENERATE SEMUA HASIL BERDASARKAN SEED ANGKA
+  // --------------------------------------------------------------
+  function generateAllResults(seedNumber) {
     const fourDNumbers = [];
-    for (let i = 0; i < TOTAL_PATTERNS; i++) {
+    for (let i = 0; i < TOTAL_RESULTS; i++) {
       fourDNumbers.push(generateFourD(seedNumber, i));
     }
-    
-    for (let i = 0; i < patternControllers.length; i++) {
+    for (let i = 0; i < resultControllers.length; i++) {
       const fourD = fourDNumbers[i];
       const pattern = uniquePatternFromFourD(fourD);
-      patternControllers[i].setPattern(pattern);
-      patternControllers[i].setFourDLabel(fourD);
+      resultControllers[i].setPattern(pattern);
+      resultControllers[i].setFourDLabel(fourD);
     }
-    console.log("Generated 8 numbers:", fourDNumbers);
+    console.log(`Seed: ${seedNumber} ? Generated:`, fourDNumbers);
   }
-  
-  // Tombol generate
-  const generateBtn = document.getElementById("generateBtn");
-  const seedInput = document.getElementById("seedInput");
-  generateBtn.addEventListener("click", generateAndDraw);
-  
-  // Generate awal saat load
-  setTimeout(() => {
-    generateAndDraw();
-  }, 100);
-  
+
+  function clearAllResults() {
+    for (let i = 0; i < resultControllers.length; i++) {
+      resultControllers[i].setPattern([]);
+      resultControllers[i].setFourDLabel("----");
+    }
+  }
+
+  // --------------------------------------------------------------
+  // 6. INISIALISASI SEMUA PATTERN
+  // --------------------------------------------------------------
+  // Input pattern (pertama)
+  const inputPatternDiv = document.querySelector('.pattern[data-pattern-idx="input"]');
+  if (inputPatternDiv) {
+    setupInputPattern(inputPatternDiv);
+  }
+
+  // Result patterns
+  const resultPatterns = document.querySelectorAll('.pattern[data-pattern-idx^="result-"]');
+  resultPatterns.forEach((pattern, idx) => {
+    setupResultPattern(pattern, idx);
+  });
+
+  // Generate awal dengan seed default (pola kosong -> hasil kosong)
+  clearAllResults();
+
   // Pencegahan scroll saat drag
   document.querySelectorAll(".angka-container").forEach(cont => {
     cont.addEventListener("touchstart", (e) => {
       if (e.target.closest(".angka")) e.preventDefault();
     }, { passive: false });
   });
-  
-  console.log("✅ Siap! Masukkan seed angka dan klik Generate untuk menampilkan 8 angka 4D beserta polanya.");
+
+  console.log("? Siap! Gambar pola di Pattern Input untuk menghasilkan 8 angka 4D acak.");
 </script>
 
 </body>
